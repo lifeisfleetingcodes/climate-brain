@@ -1,0 +1,12 @@
+services:
+  climate-brain:
+    build: .
+    container_name: climate-brain
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./climate_brain.db:/app/climate_brain.db
+      - ./trained_models:/app/trained_models
+    env_file:
+      - .env
+    restart: unless-stopped

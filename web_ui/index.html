@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ClimateBrain</title>
+<style>
+  :root { --bg:#0a0a0f; --sf:#141420; --sf2:#1c1c2e; --bd:#2a2a3e; --tx:#e8e8f0; --tx2:#8888a0; --ac:#4ecdc4; --hot:#ff6b6b; --warm:#ffa07a; --cool:#87ceeb; --cold:#6b9bff; --r:16px; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'SF Pro',system-ui,sans-serif; background:var(--bg); color:var(--tx); min-height:100vh; }
+  .app { max-width:480px; margin:0 auto; padding:20px 16px; }
+  header { text-align:center; padding:24px 0 16px; }
+  header h1 { font-size:22px; font-weight:700; } header h1 span { color:var(--ac); }
+  header .sub { color:var(--tx2); font-size:13px; margin-top:4px; }
+  .tabs { display:flex; gap:4px; margin-bottom:20px; background:var(--sf); border-radius:12px; padding:4px; }
+  .tab { flex:1; padding:10px; text-align:center; border-radius:10px; font-size:13px; font-weight:500; cursor:pointer; color:var(--tx2); transition:all .2s; }
+  .tab.active { background:var(--ac); color:var(--bg); font-weight:600; }
+  .card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:20px; margin-bottom:16px; }
+  .card h3 { font-size:15px; margin-bottom:12px; }
+  .readings { display:flex; gap:16px; margin-bottom:20px; }
+  .reading { flex:1; background:var(--sf2); border-radius:12px; padding:14px; text-align:center; }
+  .reading .val { font-size:28px; font-weight:700; }
+  .reading .unit { font-size:14px; color:var(--tx2); }
+  .reading .lbl { font-size:11px; color:var(--tx2); margin-top:4px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .chip { padding:8px 16px; border-radius:20px; border:1px solid var(--bd); background:var(--sf2); color:var(--tx2); font-size:14px; cursor:pointer; transition:all .2s; }
+  .chip.on { background:var(--ac); color:var(--bg); border-color:var(--ac); font-weight:600; }
+  .fb-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .fb-btn { aspect-ratio:1; border:none; border-radius:12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:20px; transition:all .15s; }
+  .fb-btn:active { transform:scale(.9); }
+  .fb-btn .t { font-size:8px; font-weight:600; margin-top:2px; text-transform:uppercase; }
+  .fb-btn[data-l="-3"]{background:#1a2a4a;color:var(--cold)} .fb-btn[data-l="-2"]{background:#1a2a3a;color:var(--cold)}
+  .fb-btn[data-l="-1"]{background:#1a2a30;color:var(--cool)} .fb-btn[data-l="0"]{background:#1a3a2a;color:var(--ac)}
+  .fb-btn[data-l="1"]{background:#2a2a1a;color:var(--warm)} .fb-btn[data-l="2"]{background:#3a2a1a;color:var(--hot)}
+  .fb-btn[data-l="3"]{background:#4a1a1a;color:var(--hot)}
+  .fb-btn.sent { animation:pop .4s ease; } @keyframes pop { 50%{transform:scale(1.2)} }
+  input,select { width:100%; padding:10px 14px; background:var(--sf2); border:1px solid var(--bd); border-radius:10px; color:var(--tx); font-size:14px; margin-bottom:10px; outline:none; }
+  input:focus,select:focus { border-color:var(--ac); }
+  .btn { padding:10px 20px; border:none; border-radius:10px; background:var(--ac); color:var(--bg); font-size:14px; font-weight:600; cursor:pointer; }
+  .btn:active { opacity:.8; } .btn-s { background:var(--sf2); color:var(--tx); border:1px solid var(--bd); }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; }
+  .row+.row { border-top:1px solid var(--bd); }
+  .tgl { width:44px;height:24px;border-radius:12px;background:var(--sf2);border:1px solid var(--bd);cursor:pointer;position:relative;transition:all .2s; }
+  .tgl.on { background:var(--ac);border-color:var(--ac); }
+  .tgl::after { content:'';width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:all .2s; }
+  .tgl.on::after { left:22px; }
+  .weather { display:flex;justify-content:space-between;align-items:center;font-size:13px; }
+  .weather .big { font-size:20px;font-weight:700; }
+  .toast { position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ac);color:var(--bg);padding:12px 24px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all .3s;z-index:100; }
+  .toast.show { transform:translateX(-50%) translateY(0);opacity:1; }
+  .status { text-align:center;padding:12px;font-size:11px;color:var(--tx2); }
+  .dot { display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ac);margin-right:6px;vertical-align:middle; }
+  .hidden { display:none; }
+  .ac-badge { text-align:right;font-size:13px;color:var(--ac); }
+  .ac-badge .mode { text-transform:uppercase;font-weight:600;font-size:11px; }
+  pre { font-size:11px;color:var(--tx2);white-space:pre-wrap;margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🌡️ Climate<span>Brain</span></h1><div class="sub">Multi-person comfort controller</div></header>
+  <div class="tabs">
+    <div class="tab active" onclick="go('dash')">Dashboard</div>
+    <div class="tab" onclick="go('fb')">Feedback</div>
+    <div class="tab" onclick="go('setup')">Setup</div>
+  </div>
+  <div id="dash"></div>
+  <div id="fb" class="hidden"></div>
+  <div id="setup" class="hidden"></div>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+const F=(m,p,b)=>fetch(p,{method:m,headers:{'Content-Type':'application/json'},...(b?{body:JSON.stringify(b)}:{})}).then(r=>r.json());
+let R=[],P=[],W=null,SP=null;
+
+function go(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['dash','fb','setup'][i]===t));
+  ['dash','fb','setup'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==t));
+  if(t==='dash')load();if(t==='fb')renderFB();if(t==='setup')loadSetup();
+}
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2000);}
+
+async function load(){
+  try{
+    const s=await F('GET','/api/status');R=s.rooms||[];W=s.weather;P=await F('GET','/api/people');
+    let h='';
+    if(W)h+=`<div class="card"><div class="weather"><div><div style="color:var(--tx2);font-size:12px">Outdoor</div><div class="big">${W.temperature?.toFixed(1)||'--'}°C</div></div><div style="text-align:right"><div style="color:var(--tx2)">Feels like ${W.feels_like?.toFixed(1)||'--'}°C</div><div style="color:var(--tx2);font-size:12px">${W.humidity||'--'}% RH</div></div></div></div>`;
+    if(!R.length){h+='<div class="card" style="text-align:center;color:var(--tx2)">No rooms yet. Go to Setup.</div>';}
+    else R.forEach(r=>{
+      const rm=r.room,ac=r.ac_state,ind=r.indoor,pp=(r.present_people||[]).map(p=>p.name).join(', ')||'Nobody';
+      h+=`<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:17px;font-weight:600">${rm.name}</div><div style="color:var(--tx2);font-size:12px">${r.ac_unit?.name||'No AC'}</div></div><div class="ac-badge"><div class="mode">${ac?.mode||'off'}</div><div>${ac?.mode!=='off'?(ac?.temperature||'--')+'°C':''}</div></div></div><div class="readings"><div class="reading"><div class="val">${ind?.temperature?.toFixed(1)||'--'}<span class="unit">°C</span></div><div class="lbl">Temperature</div></div><div class="reading"><div class="val">${ind?.humidity?.toFixed(0)||'--'}<span class="unit">%</span></div><div class="lbl">Humidity</div></div></div><div style="font-size:12px;color:var(--tx2)">Present: ${pp}</div></div>`;
+    });
+    h+=`<div class="status"><span class="dot"></span>${s.total_feedback_points||0} feedback points</div>`;
+    document.getElementById('dash').innerHTML=h;
+  }catch(e){document.getElementById('dash').innerHTML='<div class="card" style="color:var(--tx2)">Connection error</div>';}
+}
+
+function renderFB(){
+  if(!R.length||!P.length){document.getElementById('fb').innerHTML='<div class="card" style="text-align:center;color:var(--tx2)">Add rooms and people in Setup first.</div>';return;}
+  const lvls=[{l:-3,e:'🥶',t:'Freeze'},{l:-2,e:'❄️',t:'Cold'},{l:-1,e:'🌊',t:'Cool'},{l:0,e:'✅',t:'Perfect'},{l:1,e:'🌤',t:'Warm'},{l:2,e:'🔥',t:'Hot'},{l:3,e:'🌋',t:'Burn'}];
+  let h='';
+  R.forEach(r=>{const rm=r.room;
+    h+=`<div class="card"><div style="font-size:17px;font-weight:600;margin-bottom:16px">${rm.name}</div><div style="font-size:12px;color:var(--tx2);margin-bottom:8px">Who are you?</div><div class="chips">${P.map(p=>`<div class="chip ${SP===p.id?'on':''}" onclick="SP=${p.id};renderFB()">${p.name}</div>`).join('')}</div><div style="font-size:12px;color:var(--tx2);margin-bottom:10px">How do you feel?</div><div class="fb-grid">${lvls.map(l=>`<button class="fb-btn" data-l="${l.l}" onclick="sendFB(${rm.id},${l.l},this)">${l.e}<span class="t">${l.t}</span></button>`).join('')}</div></div>`;
+  });
+  // Presence
+  h+=`<div class="card"><h3>Who's where?</h3>`;
+  R.forEach(r=>P.forEach(p=>{
+    const on=(r.present_people||[]).some(x=>x.id===p.id);
+    h+=`<div class="row"><span style="font-size:14px">${p.name} → ${r.room.name}</span><div class="tgl ${on?'on':''}" onclick="tglPres(${p.id},${r.room.id},this)"></div></div>`;
+  }));
+  h+=`</div>`;
+  document.getElementById('fb').innerHTML=h;
+}
+async function sendFB(rid,lv,btn){
+  if(!SP){toast('Select who you are');return;}
+  await F('POST','/api/feedback',{person_id:SP,room_id:rid,comfort_level:lv});
+  btn.classList.add('sent');setTimeout(()=>btn.classList.remove('sent'),400);
+  toast('Recorded ✓');
+}
+async function tglPres(pid,rid,el){
+  const on=el.classList.contains('on');el.classList.toggle('on');
+  await F('POST',`/api/people/${pid}/presence/${rid}?present=${!on}`);
+  // Refresh room data
+  const s=await F('GET','/api/status');R=s.rooms||[];
+}
+
+async function loadSetup(){
+  R=(await F('GET','/api/status')).rooms||[];P=await F('GET','/api/people');
+  const sel=document.getElementById('setup');
+  sel.innerHTML=`
+    <div class="card"><h3>Add Room</h3><input id="nr" placeholder="Room name"><button class="btn" onclick="addRoom()">Add Room</button></div>
+    <div class="card"><h3>Add Person</h3><input id="np" placeholder="Name"><button class="btn" onclick="addPerson()">Add Person</button></div>
+    <div class="card"><h3>Register AC</h3>
+      <select id="asr"><option value="">Select room...</option>${R.map(r=>`<option value="${r.room.id}">${r.room.name}</option>`).join('')}</select>
+      <input id="an" placeholder="AC name (e.g. Daikin FTXM35)">
+      <input id="ab" placeholder="Brand">
+      <input id="asb" placeholder="SwitchBot Hub Device ID">
+      <input id="asm" placeholder="SwitchBot Meter Device ID (optional)">
+      <button class="btn" onclick="regAC()">Register AC</button>
+    </div>
+    <div class="card"><h3>SwitchBot Devices</h3><button class="btn btn-s" onclick="lsb()">Load Devices</button><pre id="sbd"></pre></div>
+    <div class="card"><h3>Current People</h3>${P.map(p=>`<div class="row"><span>${p.name}</span><span style="color:var(--ac)">Active</span></div>`).join('')||'<div style="color:var(--tx2)">None</div>'}</div>
+    <div class="card"><h3>Current Rooms</h3>${R.map(r=>`<div class="row"><span>${r.room.name}</span><span style="color:var(--tx2);font-size:12px">${r.ac_unit?.name||'No AC'}</span></div>`).join('')||'<div style="color:var(--tx2)">None</div>'}</div>`;
+}
+async function addRoom(){const n=document.getElementById('nr').value.trim();if(!n)return;await F('POST','/api/rooms',{name:n});toast('Room added ✓');loadSetup();}
+async function addPerson(){const n=document.getElementById('np').value.trim();if(!n)return;await F('POST','/api/people',{name:n});toast('Person added ✓');loadSetup();}
+async function regAC(){
+  const rid=document.getElementById('asr').value,n=document.getElementById('an').value.trim(),b=document.getElementById('ab').value.trim(),sid=document.getElementById('asb').value.trim(),mid=document.getElementById('asm').value.trim();
+  if(!rid||!n||!sid){toast('Fill required fields');return;}
+  const caps={modes:['cool','heat','dry','fan','auto'],temp_min:16,temp_max:30,temp_step:1,fan_speeds:['auto','low','medium','high'],has_swing:true};
+  if(mid)caps.meter_device_id=mid;
+  await F('POST',`/api/rooms/${rid}/ac`,{name:n,brand:b,model:'',switchbot_device_id:sid,capabilities:caps});
+  toast('AC registered ✓');loadSetup();
+}
+async function lsb(){document.getElementById('sbd').textContent='Loading...';try{const d=await F('GET','/api/switchbot/devices');document.getElementById('sbd').textContent=JSON.stringify(d,null,2);}catch(e){document.getElementById('sbd').textContent='Error: '+e;}}
+
+load();setInterval(load,30000);
+</script>
+</body>
+</html>
