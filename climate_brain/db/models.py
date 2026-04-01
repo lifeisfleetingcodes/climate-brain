@@ -3,7 +3,7 @@
 from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -139,7 +139,7 @@ class IndoorReading(BaseModel):
     room_id: int
     temperature: float
     humidity: float
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class WeatherData(BaseModel):
@@ -149,7 +149,7 @@ class WeatherData(BaseModel):
     description: str = ""
     wind_speed: float = 0.0
     clouds: int = 0
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # === Climate Log (for thermal model training) ===
@@ -169,7 +169,7 @@ class ClimateLog(BaseModel):
     # Target: what indoor temp was 15 and 30 min later
     indoor_temp_15min: Optional[float] = None
     indoor_temp_30min: Optional[float] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # === Status / Dashboard ===

@@ -16,7 +16,7 @@ Supports three strategies:
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from climate_brain.models.comfort import predict_comfort
 from climate_brain.models.thermal import predict_future_temp
 from climate_brain.db import database as db
@@ -52,7 +52,7 @@ async def find_optimal_setting(room_id: int) -> dict | None:
     fan_speeds = caps.get("fan_speeds", ["auto", "low", "medium", "high"])
 
     current_temp = ac_state.get("temperature", 24) if ac_state else 24
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Generate candidate settings to evaluate
     candidates = []
@@ -190,7 +190,7 @@ async def should_adjust(room_id: int, threshold: float = 0.8) -> dict:
         return {"adjust": False, "reason": "missing_data"}
 
     ac_state = await db.get_ac_state(ac_unit["id"])
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Check current discomfort levels
     current_discomforts = []

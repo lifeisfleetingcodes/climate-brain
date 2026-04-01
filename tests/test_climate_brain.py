@@ -260,8 +260,8 @@ class TestDatabaseIntegration:
         )
         await init_db()
         room = await create_room("Office")
-        p1 = await create_person("Alice")
-        p2 = await create_person("Bob")
+        p1 = await create_person("Charlie")
+        p2 = await create_person("Diana")
 
         await set_presence(p1["id"], room["id"], True)
         await set_presence(p2["id"], room["id"], True)
@@ -272,4 +272,4 @@ class TestDatabaseIntegration:
         await set_presence(p1["id"], room["id"], False)
         present = await get_present_people(room["id"])
         assert len(present) == 1
-        assert present[0]["name"] == "Bob"
+        assert present[0]["name"] == "Diana"

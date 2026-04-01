@@ -2,16 +2,18 @@
 
 import aiosqlite
 import json
-from datetime import datetime
-from pathlib import Path
+from datetime import datetime, timezone
 from climate_brain.config import settings
 
-DB_PATH = Path(settings.db_path)
+
+def _db_path() -> str:
+    """Get current database path from settings (read at call time, not import time)."""
+    return settings.db_path
 
 
 async def get_db() -> aiosqlite.Connection:
     """Get a database connection."""
-    db = await aiosqlite.connect(str(DB_PATH))
+    db = await aiosqlite.connect(_db_path())
     db.row_factory = aiosqlite.Row
     await db.execute("PRAGMA journal_mode=WAL")
     await db.execute("PRAGMA foreign_keys=ON")
@@ -20,7 +22,7 @@ async def get_db() -> aiosqlite.Connection:
 
 async def init_db():
     """Initialize database tables."""
-    async with aiosqlite.connect(str(DB_PATH)) as db:
+    async with aiosqlite.connect(_db_path()) as db:
         await db.executescript(SCHEMA)
         await db.commit()
 
@@ -326,7 +328,7 @@ async def save_feedback(person_id: int, room_id: int, comfort_level: int,
                         outdoor_temp: float, outdoor_humidity: float,
                         outdoor_feels_like: float, ac_mode: str,
                         ac_set_temp: int, ac_fan_speed: str) -> dict:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     db = await get_db()
     try:
         cursor = await db.execute(
@@ -373,7 +375,7 @@ async def save_climate_log(room_id: int, indoor_temp: float, indoor_humidity: fl
                            outdoor_temp: float, outdoor_humidity: float,
                            outdoor_feels_like: float, ac_mode: str,
                            ac_set_temp: int, ac_fan_speed: str):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     db = await get_db()
     try:
         await db.execute(

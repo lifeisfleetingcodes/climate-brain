@@ -10,7 +10,7 @@ Runs every N minutes and:
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from climate_brain.config import settings
 from climate_brain.db import database as db
@@ -28,7 +28,7 @@ _last_comfort_train: datetime | None = None
 
 async def control_loop():
     """Main control loop — runs every interval."""
-    print(f"[Scheduler] Control loop tick at {datetime.utcnow().isoformat()}")
+    print(f"[Scheduler] Control loop tick at {datetime.now(timezone.utc).isoformat()}")
 
     try:
         await weather_svc.fetch_weather()
@@ -85,7 +85,7 @@ async def control_loop():
 async def _maybe_retrain_models():
     """Retrain models if enough time has passed."""
     global _last_thermal_train, _last_comfort_train
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     thermal_interval = timedelta(hours=settings.thermal_retrain_hours)
     if _last_thermal_train is None or (now - _last_thermal_train) > thermal_interval:
@@ -123,7 +123,7 @@ def start_scheduler():
         minutes=settings.control_interval_minutes,
         id="control_loop",
         replace_existing=True,
-        next_run_time=datetime.utcnow(),
+        next_run_time=datetime.now(timezone.utc),
     )
     scheduler.start()
     print(f"[Scheduler] Started — running every {settings.control_interval_minutes} minutes")
